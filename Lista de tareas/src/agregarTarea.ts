@@ -1,34 +1,48 @@
-import {preguntar} from './io.js';
-import { Tarea, listaDeTareas} from './tarea.js';
+import { preguntar } from './io.js';
+import { Tarea, listaDeTareas, esFechaVencimientoValida, esTextoValido, existeTituloDuplicado, normalizarTexto } from './tarea.js';
 import { seleccionarDificultad, seleccionarEstado } from './selecEyD.js';
 
-
 export async function agregarTarea() {
-    
-    console.log(`Estas creando una nueva tarea.`);
+    console.log('\n╔══════════════════════════════════════╗');
+    console.log('║        Crear nueva tarea           ║');
+    console.log('╚══════════════════════════════════════╝\n');
 
+    let titulo = '';
+    do {
+        titulo = normalizarTexto(await preguntar('1. Título: '));
 
-    let titulo = await preguntar("1.Ingrese el titulo:");
-    while (titulo.length <= 0) {
-        console.log("ERROR. Debe ingresar al menos un caracter. Vuelva a intentarlo: \n");
-        titulo = await preguntar("1.Ingrese el titulo:");
-    }
+        if (!esTextoValido(titulo)) {
+            console.log('❌ El título no puede estar vacío.');
+            continue;
+        }
 
-    let descripcion = await preguntar("2. Ingrese la descripcion:");
-    while (descripcion.length <= 0) {
-        console.log("ERROR. Debe ingresar al menos un caracter. Vuelva a intentarlo: \n");
-        descripcion = await preguntar("2. Ingrese la descripcion:");
-    }
+        if (existeTituloDuplicado(titulo)) {
+            console.log('⚠️ Ya existe una tarea con ese título. Intente otro.');
+        }
+    } while (!esTextoValido(titulo) || existeTituloDuplicado(titulo));
 
-    let estado = await seleccionarEstado();
+    let descripcion = '';
+    do {
+        descripcion = normalizarTexto(await preguntar('2. Descripción: '));
 
-    let dificultad = await seleccionarDificultad();
+        if (!esTextoValido(descripcion)) {
+            console.log('❌ La descripción no puede estar vacía.');
+        }
+    } while (!esTextoValido(descripcion));
 
-    let vencimiento = await preguntar("Fecha de vencimiento DD/MM/AAAA: ");
+    const estado = await seleccionarEstado();
+    const dificultad = await seleccionarDificultad();
 
+    let vencimiento = '';
+    do {
+        vencimiento = normalizarTexto(await preguntar('3. Fecha de vencimiento (DD/MM/AAAA): '));
+
+        if (!esFechaVencimientoValida(vencimiento)) {
+            console.log('❌ Fecha inválida. Debe usar el formato DD/MM/AAAA.');
+        }
+    } while (!esFechaVencimientoValida(vencimiento));
 
     listaDeTareas.push(new Tarea(titulo, descripcion, estado, vencimiento, dificultad));
-    console.log('¡✅ Datos guardados!.');
-    
+    console.log('\n✅ Tarea creada correctamente.');
 }
 
