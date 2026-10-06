@@ -1,5 +1,5 @@
 import { preguntar } from './io.js';
-import { Tarea, listaDeTareas, esFechaVencimientoValida, esTextoValido, existeTituloDuplicado, normalizarTexto } from './tarea.js';
+import { Tarea, listaDeTareas, esTextoValido, existeTituloDuplicado, normalizarTexto, pedirFechaVencimiento } from './tarea.js';
 import { seleccionarDificultad, seleccionarEstado } from './selecEyD.js';
 
 export async function agregarTarea() {
@@ -33,14 +33,7 @@ export async function agregarTarea() {
     const estado = await seleccionarEstado();
     const dificultad = await seleccionarDificultad();
 
-    let vencimiento = '';
-    do {
-        vencimiento = normalizarTexto(await preguntar('3. Fecha de vencimiento (DD/MM/AAAA): '));
-
-        if (!esFechaVencimientoValida(vencimiento)) {
-            console.log('❌ Fecha inválida. Debe usar el formato DD/MM/AAAA.');
-        }
-    } while (!esFechaVencimientoValida(vencimiento));
+    const vencimiento = await pedirFechaVencimiento();
 
     listaDeTareas.push(new Tarea(titulo, descripcion, estado, vencimiento, dificultad));
     console.log('\n✅ Tarea creada correctamente.');

@@ -38,6 +38,28 @@ export function esTextoValido(valor: string): boolean {
     return normalizarTexto(valor).length > 0;
 }
 
+export function formatearFecha(dia: number, mes: number, anio: number): string | null {
+    if (!Number.isInteger(dia) || !Number.isInteger(mes) || !Number.isInteger(anio)) {
+        return null;
+    }
+
+    if (mes < 1 || mes > 12 || dia < 1 || anio < 1) {
+        return null;
+    }
+
+    const fechaValidada = new Date(anio, mes - 1, dia);
+
+    if (
+        fechaValidada.getFullYear() !== anio ||
+        fechaValidada.getMonth() !== mes - 1 ||
+        fechaValidada.getDate() !== dia
+    ) {
+        return null;
+    }
+
+    return `${String(dia).padStart(2, '0')}/${String(mes).padStart(2, '0')}/${anio}`;
+}
+
 export function esFechaVencimientoValida(fecha: string): boolean {
     const valor = normalizarTexto(fecha);
 
@@ -55,15 +77,28 @@ export function esFechaVencimientoValida(fecha: string): boolean {
     const mes = Number(mesStr);
     const anio = Number(anioStr);
 
-    if (!Number.isInteger(dia) || !Number.isInteger(mes) || !Number.isInteger(anio)) {
-        return false;
-    }
+    return formatearFecha(dia, mes, anio) !== null;
+}
 
-    const fechaValida = new Date(anio, mes - 1, dia);
+export async function pedirFechaVencimiento(): Promise<string> {
+    let dia: number;
+    let mes: number;
+    let anio: number;
+    let fechaFormateada: string | null = null;
 
-    return fechaValida.getFullYear() === anio
-        && fechaValida.getMonth() === mes - 1
-        && fechaValida.getDate() === dia;
+    do {
+        dia = Number.parseInt(await preguntar('Día: '), 10);
+        mes = Number.parseInt(await preguntar('Mes: '), 10);
+        anio = Number.parseInt(await preguntar('Año: '), 10);
+
+        fechaFormateada = formatearFecha(dia, mes, anio);
+
+        if (!fechaFormateada) {
+            console.log('❌ Fecha inválida. Ingrese un día, mes y año reales.');
+        }
+    } while (!fechaFormateada);
+
+    return fechaFormateada;
 }
 
 export function existeTituloDuplicado(titulo: string): boolean {
@@ -110,16 +145,7 @@ Tarea.prototype.setDificultad = async function(this: Task) {
 };
 
 Tarea.prototype.setVencimiento = async function(this: Task) {
-    let vencimiento = '';
-
-    do {
-        vencimiento = normalizarTexto(await preguntar('Ingrese el vencimiento DD/MM/AAAA: '));
-
-        if (!esFechaVencimientoValida(vencimiento)) {
-            console.log('❌ Formato inválido. Debe ser DD/MM/AAAA.');
-        }
-    } while (!esFechaVencimientoValida(vencimiento));
-
+    const vencimiento = await pedirFechaVencimiento();
     this.vencimiento = vencimiento;
     console.log('✅ Vencimiento guardado.');
 };
